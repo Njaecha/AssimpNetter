@@ -319,6 +319,10 @@ namespace Assimp.Unmanaged
 
         private string GetRIDArch()
         {
+#if NET462
+            // RuntimeInformation.ProcessArchitecture causes problems for some reason
+            return "x64"; // this backport should only ever be used on x64 Windows systems
+#else
             switch(RuntimeInformation.ProcessArchitecture)
             {
                 case Architecture.Arm:
@@ -331,6 +335,7 @@ namespace Assimp.Unmanaged
                 default:
                     return "x64";
             }
+#endif
         }
     }
 }

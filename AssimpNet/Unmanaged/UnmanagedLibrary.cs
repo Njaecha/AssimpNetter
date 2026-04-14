@@ -102,6 +102,9 @@ namespace Assimp.Unmanaged
         /// <returns>Platform enumeration.</returns>
         public static Platform GetPlatform()
         {
+#if NET462
+            return Platform.Windows; // this backport should only ever be used on x64 Windows systems            
+#else
             if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return Platform.Windows;
 
@@ -119,6 +122,7 @@ namespace Assimp.Unmanaged
                 return Platform.Windows;
 
             throw new InvalidOperationException("Cannot determine OS-specific implementation.");
+#endif
         }
 
         /// <summary>

@@ -103,7 +103,14 @@ namespace Assimp.Unmanaged
 
             Functions.aiImportFileExWithProperties func = GetFunction<Functions.aiImportFileExWithProperties>(FunctionNames.aiImportFileExWithProperties);
 
+#if NET462
+            IntPtr filePtr = MarshalUTF8(file);
+            IntPtr scenePtr;
+            try { scenePtr = func(filePtr, (uint) flags, fileIO, propStore); }
+            finally { Marshal.FreeHGlobal(filePtr); }
+#else
             var scenePtr = func(file, (uint) flags, fileIO, propStore);
+#endif
             FixQuaternionsInSceneFromAssimp(scenePtr);
             return scenePtr;
         }
@@ -125,7 +132,14 @@ namespace Assimp.Unmanaged
 
             byte[] buffer = MemoryHelper.ReadStreamFully(stream, 0);
 
+#if NET462
+            IntPtr formatHintPtr = MarshalUTF8(formatHint);
+            IntPtr scenePtr;
+            try { scenePtr = func(buffer, (uint) buffer.Length, (uint) flags, formatHintPtr, propStore); }
+            finally { Marshal.FreeHGlobal(formatHintPtr); }
+#else
             var scenePtr = func(buffer, (uint) buffer.Length, (uint) flags, formatHint, propStore);
+#endif
             FixQuaternionsInSceneFromAssimp(scenePtr);
             return scenePtr;
         }
@@ -224,7 +238,14 @@ namespace Assimp.Unmanaged
             Functions.aiReleaseExportBlob releaseExportBlobFunc = GetFunction<Functions.aiReleaseExportBlob>(FunctionNames.aiReleaseExportBlob);
 
             FixQuaternionsInSceneToAssimp(scene);
+#if NET462
+            IntPtr formatIdPtr = MarshalUTF8(formatId);
+            IntPtr blobPtr;
+            try { blobPtr = exportBlobFunc(scene, formatIdPtr, (uint) preProcessing); }
+            finally { Marshal.FreeHGlobal(formatIdPtr); }
+#else
             IntPtr blobPtr = exportBlobFunc(scene, formatId, (uint) preProcessing);
+#endif
             FixQuaternionsInSceneFromAssimp(scene);
 
             if(blobPtr == IntPtr.Zero)
@@ -274,7 +295,15 @@ namespace Assimp.Unmanaged
             Functions.aiExportSceneEx exportFunc = GetFunction<Functions.aiExportSceneEx>(FunctionNames.aiExportSceneEx);
 
             FixQuaternionsInSceneToAssimp(scene);
+#if NET462
+            IntPtr formatIdPtr = MarshalUTF8(formatId);
+            IntPtr fileNamePtr = MarshalUTF8(fileName);
+            ReturnCode ret;
+            try { ret = exportFunc(scene, formatIdPtr, fileNamePtr, fileIO, (uint) preProcessing); }
+            finally { Marshal.FreeHGlobal(formatIdPtr); Marshal.FreeHGlobal(fileNamePtr); }
+#else
             var ret = exportFunc(scene, formatId, fileName, fileIO, (uint) preProcessing);
+#endif
             FixQuaternionsInSceneFromAssimp(scene);
             return ret;
         }
@@ -414,7 +443,13 @@ namespace Assimp.Unmanaged
 
             Functions.aiSetImportPropertyInteger func = GetFunction<Functions.aiSetImportPropertyInteger>(FunctionNames.aiSetImportPropertyInteger);
 
+#if NET462
+            IntPtr namePtr = MarshalUTF8(name);
+            try { func(propertyStore, namePtr, value); }
+            finally { Marshal.FreeHGlobal(namePtr); }
+#else
             func(propertyStore, name, value);
+#endif
         }
 
         /// <summary>
@@ -432,7 +467,13 @@ namespace Assimp.Unmanaged
 
             Functions.aiSetImportPropertyFloat func = GetFunction<Functions.aiSetImportPropertyFloat>(FunctionNames.aiSetImportPropertyFloat);
 
+#if NET462
+            IntPtr namePtr = MarshalUTF8(name);
+            try { func(propertyStore, namePtr, value); }
+            finally { Marshal.FreeHGlobal(namePtr); }
+#else
             func(propertyStore, name, value);
+#endif
         }
 
         /// <summary>
@@ -452,7 +493,15 @@ namespace Assimp.Unmanaged
 
             AiString str = new AiString();
             if(str.SetString(value))
+            {
+#if NET462
+                IntPtr namePtr = MarshalUTF8(name);
+                try { func(propertyStore, namePtr, ref str); }
+                finally { Marshal.FreeHGlobal(namePtr); }
+#else
                 func(propertyStore, name, ref str);
+#endif
+            }
         }
 
         /// <summary>
@@ -469,7 +518,13 @@ namespace Assimp.Unmanaged
                 return;
 
             Functions.aiSetImportPropertyMatrix func = GetFunction<Functions.aiSetImportPropertyMatrix>(FunctionNames.aiSetImportPropertyMatrix);
+#if NET462
+            IntPtr namePtr = MarshalUTF8(name);
+            try { func(propertyStore, namePtr, ref value); }
+            finally { Marshal.FreeHGlobal(namePtr); }
+#else
             func(propertyStore, name, ref value);
+#endif
         }
 
         #endregion
@@ -494,7 +549,14 @@ namespace Assimp.Unmanaged
             try
             {
                 ptr = MemoryHelper.AllocateMemory(MemoryHelper.SizeOf<Vector4>());
+#if NET462
+                IntPtr keyPtr = MarshalUTF8(key);
+                ReturnCode code;
+                try { code = func(ref mat, keyPtr, (uint) texType, texIndex, ptr); }
+                finally { Marshal.FreeHGlobal(keyPtr); }
+#else
                 ReturnCode code = func(ref mat, key, (uint) texType, texIndex, ptr);
+#endif
                 Vector4 color = new Vector4();
                 if(code == ReturnCode.Success && ptr != IntPtr.Zero)
                     color = MemoryHelper.Read<Vector4>(ptr);
@@ -528,7 +590,14 @@ namespace Assimp.Unmanaged
             try
             {
                 ptr = MemoryHelper.AllocateMemory(IntPtr.Size);
+#if NET462
+                IntPtr keyPtr = MarshalUTF8(key);
+                ReturnCode code;
+                try { code = func(ref mat, keyPtr, (uint) texType, texIndex, ptr, ref floatCount); }
+                finally { Marshal.FreeHGlobal(keyPtr); }
+#else
                 ReturnCode code = func(ref mat, key, (uint) texType, texIndex, ptr, ref floatCount);
+#endif
                 float[] array = null;
                 if(code == ReturnCode.Success && floatCount > 0)
                 {
@@ -566,7 +635,14 @@ namespace Assimp.Unmanaged
             try
             {
                 ptr = MemoryHelper.AllocateMemory(IntPtr.Size);
+#if NET462
+                IntPtr keyPtr = MarshalUTF8(key);
+                ReturnCode code;
+                try { code = func(ref mat, keyPtr, (uint) texType, texIndex, ptr, ref intCount); }
+                finally { Marshal.FreeHGlobal(keyPtr); }
+#else
                 ReturnCode code = func(ref mat, key, (uint) texType, texIndex, ptr, ref intCount);
+#endif
                 int[] array = null;
                 if(code == ReturnCode.Success && intCount > 0)
                 {
@@ -599,7 +675,14 @@ namespace Assimp.Unmanaged
             Functions.aiGetMaterialProperty func = GetFunction<Functions.aiGetMaterialProperty>(FunctionNames.aiGetMaterialProperty);
 
             IntPtr ptr;
+#if NET462
+            IntPtr keyPtr = MarshalUTF8(key);
+            ReturnCode code;
+            try { code = func(ref mat, keyPtr, (uint) texType, texIndex, out ptr); }
+            finally { Marshal.FreeHGlobal(keyPtr); }
+#else
             ReturnCode code = func(ref mat, key, (uint) texType, texIndex, out ptr);
+#endif
             AiMaterialProperty prop = new AiMaterialProperty();
             if(code == ReturnCode.Success && ptr != IntPtr.Zero)
                 prop = MemoryHelper.Read<AiMaterialProperty>(ptr);
@@ -622,7 +705,14 @@ namespace Assimp.Unmanaged
             Functions.aiGetMaterialString func = GetFunction<Functions.aiGetMaterialString>(FunctionNames.aiGetMaterialString);
 
             AiString str;
+#if NET462
+            IntPtr keyPtr = MarshalUTF8(key);
+            ReturnCode code;
+            try { code = func(ref mat, keyPtr, (uint) texType, texIndex, out str); }
+            finally { Marshal.FreeHGlobal(keyPtr); }
+#else
             ReturnCode code = func(ref mat, key, (uint) texType, texIndex, out str);
+#endif
             if(code == ReturnCode.Success)
                 return str.GetString();
 
@@ -734,7 +824,13 @@ namespace Assimp.Unmanaged
 
             Functions.aiIsExtensionSupported func = GetFunction<Functions.aiIsExtensionSupported>(FunctionNames.aiIsExtensionSupported);
 
+#if NET462
+            IntPtr extPtr = MarshalUTF8(extension);
+            try { return func(extPtr); }
+            finally { Marshal.FreeHGlobal(extPtr); }
+#else
             return func(extension);
+#endif
         }
 
         /// <summary>
@@ -931,7 +1027,13 @@ namespace Assimp.Unmanaged
 
             Functions.aiGetEmbeddedTexture func = GetFunction<Functions.aiGetEmbeddedTexture>(FunctionNames.aiGetEmbeddedTexture);
 
+#if NET462
+            IntPtr filenamePtr = MarshalUTF8(filename);
+            try { return func(scene, filenamePtr); }
+            finally { Marshal.FreeHGlobal(filenamePtr); }
+#else
             return func(scene, filename);
+#endif
         }
 
         #region Function names 
@@ -1025,7 +1127,7 @@ namespace Assimp.Unmanaged
         }
 
         #endregion
-
+ 
         #region Function delegates
 
         /// <summary>
@@ -1033,23 +1135,42 @@ namespace Assimp.Unmanaged
         /// </summary>
         internal static class Functions
         {
-
             #region Import Delegates
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiImportFile)]
+#if NET462
+            public delegate IntPtr aiImportFile(IntPtr file, uint flags);
+#else
             public delegate IntPtr aiImportFile([In, MarshalAs(UnmanagedType.LPUTF8Str)] string file, uint flags);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiImportFileEx)]
+#if NET462
+            public delegate IntPtr aiImportFileEx(IntPtr file, uint flags, IntPtr fileIO);
+#else
             public delegate IntPtr aiImportFileEx([In, MarshalAs(UnmanagedType.LPUTF8Str)] string file, uint flags, IntPtr fileIO);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiImportFileExWithProperties)]
+#if NET462
+            public delegate IntPtr aiImportFileExWithProperties(IntPtr file, uint flag, IntPtr fileIO, IntPtr propStore);
+#else
             public delegate IntPtr aiImportFileExWithProperties([In, MarshalAs(UnmanagedType.LPUTF8Str)] string file, uint flag, IntPtr fileIO, IntPtr propStore);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiImportFileFromMemory)]
+#if NET462
+            public delegate IntPtr aiImportFileFromMemory(byte[] buffer, uint bufferLength, uint flags, IntPtr formatHint);
+#else
             public delegate IntPtr aiImportFileFromMemory(byte[] buffer, uint bufferLength, uint flags, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string formatHint);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiImportFileFromMemoryWithProperties)]
+#if NET462
+            public delegate IntPtr aiImportFileFromMemoryWithProperties(byte[] buffer, uint bufferLength, uint flags, IntPtr formatHint, IntPtr propStore);
+#else
             public delegate IntPtr aiImportFileFromMemoryWithProperties(byte[] buffer, uint bufferLength, uint flags, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string formatHint, IntPtr propStore);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiReleaseImport)]
             public delegate void aiReleaseImport(IntPtr scene);
@@ -1071,16 +1192,28 @@ namespace Assimp.Unmanaged
             public delegate void aiReleaseExportFormatDescription(IntPtr desc);
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiExportSceneToBlob)]
+#if NET462
+            public delegate IntPtr aiExportSceneToBlob(IntPtr scene, IntPtr formatId, uint preProcessing);
+#else
             public delegate IntPtr aiExportSceneToBlob(IntPtr scene, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string formatId, uint preProcessing);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiReleaseExportBlob)]
             public delegate void aiReleaseExportBlob(IntPtr blobData);
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiExportScene)]
+#if NET462
+            public delegate ReturnCode aiExportScene(IntPtr scene, IntPtr formatId, IntPtr fileName, uint preProcessing);
+#else
             public delegate ReturnCode aiExportScene(IntPtr scene, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string formatId, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string fileName, uint preProcessing);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiExportSceneEx)]
+#if NET462
+            public delegate ReturnCode aiExportSceneEx(IntPtr scene, IntPtr formatId, IntPtr fileName, IntPtr fileIO, uint preProcessing);
+#else
             public delegate ReturnCode aiExportSceneEx(IntPtr scene, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string formatId, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string fileName, IntPtr fileIO, uint preProcessing);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiCopyScene)]
             public delegate void aiCopyScene(IntPtr sceneIn, out IntPtr sceneOut);
@@ -1112,35 +1245,71 @@ namespace Assimp.Unmanaged
             public delegate void aiReleasePropertyStore(IntPtr propertyStore);
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiSetImportPropertyInteger)]
+#if NET462
+            public delegate void aiSetImportPropertyInteger(IntPtr propertyStore, IntPtr name, int value);
+#else
             public delegate void aiSetImportPropertyInteger(IntPtr propertyStore, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string name, int value);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiSetImportPropertyFloat)]
+#if NET462
+            public delegate void aiSetImportPropertyFloat(IntPtr propertyStore, IntPtr name, float value);
+#else
             public delegate void aiSetImportPropertyFloat(IntPtr propertyStore, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string name, float value);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiSetImportPropertyString)]
+#if NET462
+            public delegate void aiSetImportPropertyString(IntPtr propertyStore, IntPtr name, ref AiString value);
+#else
             public delegate void aiSetImportPropertyString(IntPtr propertyStore, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string name, ref AiString value);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiSetImportPropertyMatrix)]
+#if NET462
+            public delegate void aiSetImportPropertyMatrix(IntPtr propertyStore, IntPtr name, ref Matrix4x4 value);
+#else
             public delegate void aiSetImportPropertyMatrix(IntPtr propertyStore, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string name, ref Matrix4x4 value);
+#endif
 
             #endregion
 
             #region Material Delegates
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetMaterialColor)]
+#if NET462
+            public delegate ReturnCode aiGetMaterialColor(ref AiMaterial mat, IntPtr key, uint texType, uint texIndex, IntPtr colorOut);
+#else
             public delegate ReturnCode aiGetMaterialColor(ref AiMaterial mat, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string key, uint texType, uint texIndex, IntPtr colorOut);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetMaterialFloatArray)]
+#if NET462
+            public delegate ReturnCode aiGetMaterialFloatArray(ref AiMaterial mat, IntPtr key, uint texType, uint texIndex, IntPtr ptrOut, ref uint valueCount);
+#else
             public delegate ReturnCode aiGetMaterialFloatArray(ref AiMaterial mat, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string key, uint texType, uint texIndex, IntPtr ptrOut, ref uint valueCount);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetMaterialIntegerArray)]
+#if NET462
+            public delegate ReturnCode aiGetMaterialIntegerArray(ref AiMaterial mat, IntPtr key, uint texType, uint texIndex, IntPtr ptrOut, ref uint valueCount);
+#else
             public delegate ReturnCode aiGetMaterialIntegerArray(ref AiMaterial mat, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string key, uint texType, uint texIndex, IntPtr ptrOut, ref uint valueCount);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetMaterialProperty)]
+#if NET462
+            public delegate ReturnCode aiGetMaterialProperty(ref AiMaterial mat, IntPtr key, uint texType, uint texIndex, out IntPtr propertyOut);
+#else
             public delegate ReturnCode aiGetMaterialProperty(ref AiMaterial mat, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string key, uint texType, uint texIndex, out IntPtr propertyOut);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetMaterialString)]
+#if NET462
+            public delegate ReturnCode aiGetMaterialString(ref AiMaterial mat, IntPtr key, uint texType, uint texIndex, out AiString str);
+#else
             public delegate ReturnCode aiGetMaterialString(ref AiMaterial mat, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string key, uint texType, uint texIndex, out AiString str);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetMaterialTexture)]
             public delegate ReturnCode aiGetMaterialTexture(ref AiMaterial mat, TextureType type, uint index, out AiString path, out TextureMapping mapping, out uint uvIndex, out float blendFactor, out TextureOperation textureOp, [In, Out] TextureWrapMode[] wrapModes, out uint flags);
@@ -1163,7 +1332,11 @@ namespace Assimp.Unmanaged
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiIsExtensionSupported)]
             [return: MarshalAs(UnmanagedType.Bool)]
+#if NET462
+            public delegate bool aiIsExtensionSupported(IntPtr extension);
+#else
             public delegate bool aiIsExtensionSupported([In, MarshalAs(UnmanagedType.LPUTF8Str)] string extension);
+#endif
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetImportFormatCount)]
             public delegate UIntPtr aiGetImportFormatCount();
@@ -1196,10 +1369,26 @@ namespace Assimp.Unmanaged
             #endregion
 
             [UnmanagedFunctionPointer(CallingConvention.Cdecl), UnmanagedFunctionName(FunctionNames.aiGetEmbeddedTexture)]
+#if NET462
+            public delegate IntPtr aiGetEmbeddedTexture(IntPtr scene, IntPtr filename);
+#else
             public delegate IntPtr aiGetEmbeddedTexture(IntPtr scene, [In, MarshalAs(UnmanagedType.LPUTF8Str)] string filename);
+#endif
         }
 
         #endregion
+        
+#if NET462
+        private static IntPtr MarshalUTF8(string s)
+        {
+            if(s == null) return IntPtr.Zero;
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(s);
+            IntPtr ptr = Marshal.AllocHGlobal(bytes.Length + 1);
+            Marshal.Copy(bytes, 0, ptr, bytes.Length);
+            Marshal.WriteByte(ptr, bytes.Length, 0);
+            return ptr;
+        }
+#endif
 
         // Assimp's quaternions are WXYZ, C#'s are XYZW, we need to convert all of them.
         internal static Quaternion FixQuaternionFromAssimp(Quaternion quat) => new(quat.Y, quat.Z, quat.W, quat.X);
